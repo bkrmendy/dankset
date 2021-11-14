@@ -25,7 +25,8 @@ TEST(UNIT_HASHSET, TestConstructIterator) {
 TEST(UNIT_HASHSET, TestInsert) {
     Set<int> numbers{};
     numbers.insert(1);
-    EXPECT_EQ(numbers.size(), 1);
+    EXPECT_TRUE(numbers.contains(1));
+    EXPECT_EQ(numbers.size()    , 1);
 }
 
 TEST(UNIT_HASHSET, TestContains) {

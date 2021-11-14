@@ -8,73 +8,87 @@ class List {
 
     struct Node {
         Key data;
-        std::unique_ptr<Node> next;
+        Node* next;
 
         Node(Key data) : data{data}, next{nullptr} {}
-
-        size_t size() const {
-            if (this->next == nullptr) {
-                return 1;
-            }
-            return this->next->size() + 1;
-        }
-
-        bool contains(const Key& key) const {
-            if (this->data == key) {
-                return true;
-            }
-            if (this->next == nullptr) {
-                return false;
-            }
-            return this->next->contains(key);
-        }
 
         void remove(const Key& key) {
             if (this->next == nullptr) {
                 return;
             }
             if (this->next->data == key) {
-                this->next = std::move(this->next->next);
+                Node* temp = this->next->next;
+                delete this->next;
+                this->next = temp;
                 return;
             }
             this->next->remove(key);
         }
     };
 
-    std::unique_ptr<Node> front;
+    Node* front;
 
 public:
     List() = default;
 
     void push_front(Key key) {
-        auto temp{std::make_unique<Node>(key)};
-        temp->next = std::move(this->front);
-        this->front = std::move(temp);
+        Node* temp = new Node{key};
+        temp->next = this->front;
+        this->front = temp;
     }
 
     size_t size() const {
-        if (this->front == nullptr) {
-            return 0;
+        size_t size = 0;
+        Node* current = this->front;
+        while (current != nullptr) {
+            size += 1;
+            current = this->front->next;
         }
-        return this->front->size();
+        return size;
     }
 
     bool contains(const Key& key) const {
-        if (this->front == nullptr) {
-            return false;
+        Node* current = this->front;
+        while (current != nullptr) {
+            if (current->data == key) {
+                return true;
+            }
+            current = this->front->next;
         }
-        return this->front->contains(key);
+        return false;
     }
 
     void remove(const Key& key) {
         if (this->front == nullptr) {
             return;
         }
-        if (this->front->data) {
-            this->front = nullptr;
+        if (this->front->data == key) {
+            Node* temp = this->front->next;
+            delete this->front;
+            this->front = temp;
             return;
         }
         this->front->remove(key);
+    }
+
+    void dump(std::ostream& o) {
+        Node* current = this->front;
+        while (current != nullptr) {
+            o << current->data << " ";
+            current = current->next;
+        }
+    }
+
+    void clear() {
+        while (this->front != nullptr) {
+            Node* next = this->front->next;
+            delete this->front;
+            this->front = next;
+        }
+    }
+
+    ~List() {
+        this->clear();
     }
 };
 

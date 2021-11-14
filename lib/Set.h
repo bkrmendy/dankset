@@ -2,7 +2,6 @@
 #include "List.h"
 
 #include <cstdlib>
-#include <array>
 #include <functional>
 #include <initializer_list>
 #include <iostream>
@@ -20,19 +19,28 @@ public:
     using hasher = std::hash<key_type>;
 
 private:
-    std::array<List<key_type>, Size> buckets;
+    List<key_type>* buckets;
 
     size_type hash(const_reference k) const {
         return hasher{}(k);
     }
 
+    void mkBuckets() {
+        this->buckets = new List<key_type>[Size];
+        for (size_t iBucket = 0; iBucket < Size; iBucket++) {
+            this->buckets[iBucket] = List<key_type>{};
+        }
+    }
+
 public:
-    Set() = default;
+    Set();
 
     Set(std::initializer_list<Set::key_type> initializerList);
 
     template<typename InputIt>
     Set(InputIt first, InputIt last);
+
+    ~Set();
 
     void insert(Key key);
 
@@ -51,7 +59,13 @@ public:
 };
 
 template<typename Key, size_t Size>
+Set<Key, Size>::Set() {
+    mkBuckets();
+}
+
+template<typename Key, size_t Size>
 Set<Key, Size>::Set(std::initializer_list<Key> initializerList) {
+    mkBuckets();
     for (const auto& key : initializerList) {
         this->insert(key);
     }
@@ -60,14 +74,15 @@ Set<Key, Size>::Set(std::initializer_list<Key> initializerList) {
 template<typename Key, size_t Size>
 template<typename InputIt>
 Set<Key, Size>::Set(InputIt first, InputIt last) {
+    mkBuckets();
     this->insert(first, last);
 }
 
 template<typename Key, size_t Size>
 typename Set<Key, Size>::size_type  Set<Key, Size>::size() const {
     Set::size_type size = 0;
-    for (const auto& bucket : this->buckets) {
-        size += bucket.size();
+    for (size_t iBucket = 0; iBucket < Size; iBucket++) {
+        size += this->buckets[iBucket].size();
     }
     return size;
 }
@@ -78,21 +93,19 @@ void Set<Key, Size>::insert(Key key) {
         return;
     }
     const auto bucketIdx = this->hash(key) % Size;
-    this->buckets.at(bucketIdx).push_front(key);
+    this->buckets[bucketIdx].push_front(key);
 }
 
 template<typename Key, size_t Size>
 void Set<Key, Size>::erase(Key key) {
     const auto bucketIdx = this->hash(key) % Size;
-    this->buckets.at(bucketIdx).remove(key);
+    this->buckets[bucketIdx].remove(key);
 }
 
 template<typename Key, size_t Size>
 bool Set<Key, Size>::contains(Key key) {
     const auto bucketIdx = this->hash(key) % Size;
-    const std::equal_to<key_type> equals = Set::key_equal{};
-    const auto& bucket = this->buckets.at(bucketIdx);
-    return bucket.contains(key);
+    return this->buckets[bucketIdx].contains(key);
 }
 
 template<typename Key, size_t Size>
@@ -110,10 +123,8 @@ typename Set<Key, Size>::size_type Set<Key, Size>::count(const key_type &key) co
 
 template<typename Key, size_t Size>
 void Set<Key, Size>::dump(std::ostream &o) const {
-    for (const auto& bucket : this->buckets) {
-        for (const auto& key : bucket) {
-            o << key << " ";
-        }
+    for (size_t iBucket = 0; iBucket < Size; iBucket++) {
+        this->buckets[iBucket].dump(o);
     }
 }
 
@@ -125,4 +136,12 @@ void Set<Key, Size>::insert(InputIt first, InputIt last) {
         this->insert(*current);
         current++;
     }
+}
+
+template<typename Key, size_t Size>
+Set<Key, Size>::~Set() {
+    for (size_t iBucket = 0; iBucket < Size; iBucket++) {
+        this->buckets[iBucket].clear();
+    }
+    delete[] this->buckets;
 }
