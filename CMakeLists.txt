@@ -3,7 +3,7 @@ project(hashset)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_library(hashset SHARED lib/Set.h)
+add_library(hashset SHARED lib/Set.h main.cpp lib/List.h)
 set_target_properties(hashset PROPERTIES LINKER_LANGUAGE CXX)
 
 enable_testing()

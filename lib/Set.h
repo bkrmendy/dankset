@@ -1,21 +1,15 @@
 
+#include "List.h"
+
 #include <cstdlib>
 #include <array>
-#include <list>
 #include <functional>
 #include <initializer_list>
 #include <iostream>
 
 template<typename Key, size_t Size = 23>
 class Set {
-    std::array<std::list<Key>, Size> buckets;
-
-    size_t hash(const Key& k) const {
-        return Set::hasher{}(k);
-    }
-
 public:
-
     using value_type = Key;
     using key_type = Key;
     using reference = value_type&;
@@ -25,6 +19,14 @@ public:
     using key_equal = std::equal_to<key_type>;
     using hasher = std::hash<key_type>;
 
+private:
+    std::array<List<key_type>, Size> buckets;
+
+    size_type hash(const_reference k) const {
+        return hasher{}(k);
+    }
+
+public:
     Set() = default;
 
     Set(std::initializer_list<Set::key_type> initializerList);
@@ -33,6 +35,7 @@ public:
     Set(InputIt first, InputIt last);
 
     void insert(Key key);
+
     template<typename InputIt>
     void insert(InputIt first, InputIt last);
 
@@ -74,26 +77,22 @@ void Set<Key, Size>::insert(Key key) {
     if (this->contains(key)) {
         return;
     }
-    const auto bucket = this->hash(key) % Size;
-    this->buckets.at(bucket).push_front(key);
+    const auto bucketIdx = this->hash(key) % Size;
+    this->buckets.at(bucketIdx).push_front(key);
 }
 
 template<typename Key, size_t Size>
 void Set<Key, Size>::erase(Key key) {
-    const auto bucket = this->hash(key) % Size;
-    this->buckets.at(bucket).erase(key);
+    const auto bucketIdx = this->hash(key) % Size;
+    this->buckets.at(bucketIdx).remove(key);
 }
 
 template<typename Key, size_t Size>
 bool Set<Key, Size>::contains(Key key) {
-    const auto bucket = this->hash(key);
-    const auto equals = Set::key_equal{};
-    for (const auto& e : this->buckets.at(bucket)) {
-        if (equals(e, key)) {
-            return true;
-        }
-    }
-    return false;
+    const auto bucketIdx = this->hash(key) % Size;
+    const std::equal_to<key_type> equals = Set::key_equal{};
+    const auto& bucket = this->buckets.at(bucketIdx);
+    return bucket.contains(key);
 }
 
 template<typename Key, size_t Size>
@@ -121,8 +120,9 @@ void Set<Key, Size>::dump(std::ostream &o) const {
 template<typename Key, size_t Size>
 template<typename InputIt>
 void Set<Key, Size>::insert(InputIt first, InputIt last) {
-    while (first != last) {
-        this->insert(*first);
-        first++;
+    InputIt current = first;
+    while (current != last) {
+        this->insert(*current);
+        current++;
     }
 }

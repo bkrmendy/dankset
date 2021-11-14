@@ -15,9 +15,27 @@ TEST(UNIT_HASHSET, TestInitializerList) {
 }
 
 TEST(UNIT_HASHSET, TestConstructIterator) {
-    std::vector<int> elems = {1, 2, 3, 4, 5, 6, 7};
-    Set<int> numbers{elems.begin(), elems.end()};
+    std::vector<int> elems = { 1, 2, 3, 4, 5, 6, 7 };
+    Set<int, 13> numbers{elems.begin(), elems.end()};
     for (int n : elems){
         EXPECT_TRUE(numbers.contains(n));
     }
+}
+
+TEST(UNIT_HASHSET, TestInsert) {
+    Set<int> numbers{};
+    numbers.insert(1);
+    EXPECT_EQ(numbers.size(), 1);
+}
+
+TEST(UNIT_HASHSET, TestContains) {
+    Set<int> numbers = { 1,2,3,4 };
+    EXPECT_TRUE(numbers.contains(3));
+    EXPECT_FALSE(numbers.contains(6));
+}
+
+TEST(UNIT_HASHSET, TestErase) {
+    Set<int> numbers = { 1, 2, 3, 4 };
+    numbers.erase(4);
+    EXPECT_EQ(numbers.size(), 3);
 }
